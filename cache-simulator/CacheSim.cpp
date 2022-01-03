@@ -25,7 +25,6 @@ int main(int argc, char** argv) {
     }
 
     // Get input arguments
-
     // File
     // Assuming it is the first argument
     char* fileString = argv[1];
@@ -74,7 +73,6 @@ int main(int argc, char** argv) {
             return 0;
         }
     }
-    //////////////////////
 
     int l1_sets_bits_num = L1Size - BSize - L1Assoc;
     int l1_sets_num = (int)pow(2, l1_sets_bits_num);
@@ -83,8 +81,6 @@ int main(int argc, char** argv) {
     int l1_ways_num = (int)pow(2, L1Assoc);
     int l2_ways_num = (int)pow(2, L2Assoc);
 
-
-
     cacheLevel l1 = cacheLevel(l1_ways_num, l1_sets_num, L1Cyc);
     cacheLevel l2 = cacheLevel(l2_ways_num, l2_sets_num, L2Cyc);
 
@@ -92,12 +88,10 @@ int main(int argc, char** argv) {
     int cycles_total_count = 0;
     int l1_access_count = 0;
     int l2_access_count = 0;
-    //////////////////
+
     while (getline(file, line)) {
 
-        //////
         commands_count++;
-        /////
         stringstream ss(line);
         string address;
         char operation = 0; // read (R) or write (W)
@@ -108,21 +102,19 @@ int main(int argc, char** argv) {
         }
 
         // DEBUG - remove this line
-        cout << "operation: " << operation;
+        //cout << "operation: " << operation;
 
         string cutAddress = address.substr(2); // Removing the "0x" part of the address
 
         // DEBUG - remove this line
-        cout << ", address (hex)" << cutAddress;
+        //cout << ", address (hex)" << cutAddress;
 
         unsigned long int num = 0;
         num = strtoul(cutAddress.c_str(), NULL, 16);
 
         // DEBUG - remove this line
-        cout << " (dec) " << num << endl;
+        //cout << " (dec) " << num << endl;
 
-
-        ////////////////////////
         unsigned int l1tag = num >> (l1_sets_bits_num + BSize);
         unsigned int l2tag = num >> (l2_sets_bits_num + BSize);
         unsigned temp_1 = num >> BSize;// remove off set from command
@@ -134,53 +126,29 @@ int main(int argc, char** argv) {
         temp_2 = temp_1 * temp_pow;
         unsigned command_set_l2 = temp_2 / temp_pow;
 
-
-
-
-        cout << "l1 tag is" << l1tag << endl;
-
-        cout << "l1 set is" << command_set_l1 << endl;
-
-        cout << "l2 tag is" << l2tag << endl;
-
-        cout << "l2 set is" << command_set_l2 << endl;
-
-
-
-
-
-
-
-        if (l1_sets_bits_num == 0)
-        {
+        if (l1_sets_bits_num == 0){
             command_set_l1 = 0;
         }
-        if (l2_sets_bits_num == 0)
-        {
+        if (l2_sets_bits_num == 0){
             command_set_l2 = 0;
         }
 
         if (operation == 'r') {
             bool read_result_l1 = l1.checkIfReadHit(command_set_l1, l1tag);
             cycles_total_count += L1Cyc;
-            if (!read_result_l1)//read miss in l1
-            {
+            if (!read_result_l1){//read miss in l1
                 l2_access_count++;
                 bool read_result_l2 = l2.checkIfReadHit(command_set_l2, l2tag);
                 cycles_total_count += L2Cyc;
-                if (read_result_l2) // read l2 hit , bring to l1
-                {
+                if (read_result_l2){ // read l2 hit , bring to l1
                     int empty_way = l1.getEmptyWay(command_set_l1);
-                    if (empty_way != -1)// there is an empty way
-                    {
+                    if (empty_way != -1){// there is an empty way
                         l1.insertBlock(command_set_l1, empty_way, l1tag, false);
                     }
-                    else// there is no empty way
-                    {
+                    else{// there is no empty way
                         unsigned int writeBackTag;
-                        if (l1.evictBlock(command_set_l1, writeBackTag, empty_way))
+                        if (l1.evictBlock(command_set_l1, writeBackTag, empty_way)){
                             // the block that we are deleting is dirty,therefore we need to update it in l2
-                        {
                             unsigned int temp = writeBackTag << l1_sets_bits_num;
                             temp = temp | command_set_l1;
                             unsigned int l2_tag = temp >> l2_sets_bits_num;
@@ -189,24 +157,19 @@ int main(int argc, char** argv) {
                             l2.writeBack(l2_set, l2_tag);
                             l1.insertBlock(command_set_l1, empty_way, l1tag, false);
                         }
-
                     }
                 }
                 else { // read l2 miss  (and read l1 miss)
-
-                 // write to l2
+                    // write to l2
                     cycles_total_count += MemCyc;
                     int empty_way = l2.getEmptyWay(command_set_l2);
-                    if (empty_way != -1)// there is an empty way in l2
-                    {
+                    if (empty_way != -1){// there is an empty way in l2
                         l2.insertBlock(command_set_l2, empty_way, l2tag, false);
                     }
-                    else// there is no empty way in l2
-                    {
+                    else{// there is no empty way in l2
                         unsigned int writeBackTag;
-                        if (l2.evictBlock(command_set_l2, writeBackTag, empty_way))
+                        if (l2.evictBlock(command_set_l2, writeBackTag, empty_way)){
                             // the block that we are deleting is dirty,therefore we need to update it in memory
-                        {
                             unsigned int temp = writeBackTag << l2_sets_bits_num;
                             temp = temp | command_set_l2;
                             unsigned int l1_tag = temp >> l1_sets_bits_num;
@@ -214,20 +177,16 @@ int main(int argc, char** argv) {
                             l1_set = l1_set >> (32 - l1_sets_bits_num);
                             l1.snoop(l1_set, l1_tag);
                         }
-
                     }
                     // write in l1
                     empty_way = l1.getEmptyWay(command_set_l1);
-                    if (empty_way != -1)// there is an empty way
-                    {
+                    if (empty_way != -1){// there is an empty way
                         l1.insertBlock(command_set_l1, empty_way, l1tag, false);
                     }
-                    else// there is no empty way
-                    {
+                    else{// there is no empty way{
                         unsigned int writeBackTag;
-                        if (l1.evictBlock(command_set_l1, writeBackTag, empty_way))
+                        if (l1.evictBlock(command_set_l1, writeBackTag, empty_way)){
                             // the block that we are deleting is dirty,therefore we need to update it in l2
-                        {
                             unsigned int temp = writeBackTag << l1_sets_bits_num;
                             temp = temp | command_set_l1;
                             unsigned int l2_tag = temp >> l2_sets_bits_num;
@@ -240,7 +199,7 @@ int main(int argc, char** argv) {
                 }
             }
         }
-        if (operation == 'w') {
+        if (operation == 'w'){
             cycles_total_count += L1Cyc;
             bool write_result_l1 = l1.checkIfWriteHit(command_set_l1, l1tag);
             if (write_result_l1) {
@@ -251,31 +210,19 @@ int main(int argc, char** argv) {
                 bool read_result_l2 = l2.checkIfReadHit(command_set_l2, l2tag);
                 cycles_total_count += L2Cyc;
                 if (read_result_l2) {// if write l2 hit amd write allocate
-
-
-                    cout << "miss l1 hit l2" << endl;
-
                     int empty_way = l1.getEmptyWay(command_set_l1);
-                    if (empty_way != -1)// there is an empty way
-                    {
+                    if (empty_way != -1){// there is an empty way
                         l1.insertBlock(command_set_l1, empty_way, l1tag, true);
                     }
-                    else// there is no empty way
-                    {
-
-
-                        cout << "miss l1 hit l2 and there is no empty way in l1" << endl;
+                    else{// there is no empty way
                         unsigned int writeBackTag;
-                        if (l1.evictBlock(command_set_l1, writeBackTag, empty_way))
+                        if (l1.evictBlock(command_set_l1, writeBackTag, empty_way)){
                             // the block that we are deleting is dirty,therefore we need to update it in l2
-                        {
                             unsigned int temp = writeBackTag * ((int)pow(2, l1_sets_bits_num));
                             temp = temp | command_set_l1;
                             unsigned int l2_tag = temp / ((int)pow(2, l2_sets_bits_num));
                             unsigned int l2_set = temp * ((int)pow(2, (32 - l2_sets_bits_num)));
                             l2_set = l2_set / ((int)pow(2, (32 - l2_sets_bits_num)));
-
-                            cout << "l2 set is " << l2_set << endl;
 
                             l2.writeBack(l2_set, l2_tag);
                             l1.insertBlock(command_set_l1, empty_way, l1tag, true);
@@ -283,19 +230,16 @@ int main(int argc, char** argv) {
                     }
                 }
                 else {// l2 miss, add to l1 and l2
-                 // add l2
+                    // add l2
                     cycles_total_count += MemCyc;
                     int empty_way = l2.getEmptyWay(command_set_l2);
-                    if (empty_way != -1)// there is an empty way in l2
-                    {
+                    if (empty_way != -1){// there is an empty way in l2
                         l2.insertBlock(command_set_l2, empty_way, l2tag, false);
                     }
-                    else// there is no empty way in l2
-                    {
+                    else{// there is no empty way in l2
                         unsigned int writeBackTag;
-                        if (l2.evictBlock(command_set_l2, writeBackTag, empty_way))
+                        if (l2.evictBlock(command_set_l2, writeBackTag, empty_way)){
                             // the block that we are deleting is dirty,therefore we need to update it in memory
-                        {
                             unsigned int temp = writeBackTag << l2_sets_bits_num;
                             temp = temp | command_set_l2;
                             unsigned int l1_tag = temp >> l1_sets_bits_num;
@@ -307,16 +251,13 @@ int main(int argc, char** argv) {
                     }
                     // add to l1
                     empty_way = l1.getEmptyWay(command_set_l1);
-                    if (empty_way != -1)// there is an empty way
-                    {
+                    if (empty_way != -1){// there is an empty way
                         l1.insertBlock(command_set_l1, empty_way, l1tag, false);
                     }
-                    else// there is no empty way
-                    {
+                    else{// there is no empty way
                         unsigned int writeBackTag;
-                        if (l1.evictBlock(command_set_l1, writeBackTag, empty_way))
+                        if (l1.evictBlock(command_set_l1, writeBackTag, empty_way)){
                             // the block that we are deleting is dirty,therefore we need to update it in l2
-                        {
                             unsigned int temp = writeBackTag << l1_sets_bits_num;
                             temp = temp | command_set_l1;
                             unsigned int l2_tag = temp >> l2_sets_bits_num;
@@ -325,10 +266,8 @@ int main(int argc, char** argv) {
                             l2.writeBack(l2_set, l2_tag);
                             l1.insertBlock(command_set_l1, empty_way, l1tag, false);
                         }
-
                     }
                 }
-
             }
             else if (!write_result_l1 && WrAlloc == 0) {
                 cycles_total_count += L2Cyc;
@@ -337,7 +276,6 @@ int main(int argc, char** argv) {
                 }
             }
         }
-
     }
 
     l1_access_count = commands_count;
@@ -345,8 +283,6 @@ int main(int argc, char** argv) {
     double L2MissRate = (double)l2.miss / (double)l2_access_count;
     double avgAccTime = (double)cycles_total_count / (double)commands_count;
 
-
-    //////////////////////////////
     printf("L1miss=%.03f ", L1MissRate);
     printf("L2miss=%.03f ", L2MissRate);
     printf("AccTimeAvg=%.03f\n", avgAccTime);
