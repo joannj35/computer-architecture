@@ -24,4 +24,6 @@ Computer Architecture course repository
    - allows queries regarding the information dependencies of commands in the program, for example:
       which commands does a pareticular command / instruction depend on.      
 
-4)
+4) Multi-threading simulator:
+   - Blocked MT
+   - Finegrained MT (interleaved)
