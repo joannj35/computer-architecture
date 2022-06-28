@@ -62,9 +62,8 @@ class Thread {
         void setWaittingCycles(int n) {
         waiting_cycles=n;
         }
-
-
 };
+
 
 class simulator{
         public:
@@ -104,6 +103,7 @@ class simulator{
         return (halt_treads_num==threads_num);
         }
 };
+
 
 void simulator::runInstruction(Thread *thread){
     Instruction instruction;
@@ -155,6 +155,7 @@ void simulator::runInstruction(Thread *thread){
             break;
     }
 }
+
 
 Thread* simulator::switchThreadBlocked(Thread* current_thread){
     if(current_thread->getWaittingCycles() == 0 && !(current_thread->isHalt()) )
